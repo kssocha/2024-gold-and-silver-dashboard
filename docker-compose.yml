@@ -1,0 +1,22 @@
+version: '3.4'
+
+services:
+  202312goldandsilverdashboard:
+    container_name: 2024-gold-and-silver-dashboard
+    image: kssocha/2024-gold-and-silver-dashboard:v0.1
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./src:/app/src
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /app/src &&
+        while true; do
+          watchmedo auto-restart --recursive --pattern='*.py' -- python /app/src/visualization/visualize.py
+          sleep 1
+        done
+    ports:
+      - 8050:8050

@@ -1,0 +1,11 @@
+username: g64202_ckp
+
+password: temp-password
+
+shell: /bin/bash
+
+ssh_port: 22
+
+packages:
+  - vim
+  - htop

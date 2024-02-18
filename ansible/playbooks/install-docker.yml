@@ -1,0 +1,19 @@
+---
+- hosts: all
+  become: true
+
+  roles:
+    - role: roles/system
+
+    - role: geerlingguy.pip
+
+    - role: geerlingguy.docker
+      
+  tasks:
+    - name: Pull dashboard container
+      become: true
+      command: docker pull kssocha/2024-gold-and-silver-dashboard:v0.1
+
+    - name: Start dashboard container
+      become: true
+      command: docker run --name 2024-gold-and-silver-dashboard -d -p 8050:8050 kssocha/2024-gold-and-silver-dashboard:v0.1
