@@ -3,7 +3,7 @@ version: '3.4'
 services:
   202312goldandsilverdashboard:
     container_name: 2024-gold-and-silver-dashboard
-    image: kssocha/2024-gold-and-silver-dashboard:v0.1
+    image: kssocha/2024-gold-and-silver-dashboard:v0.2
     build:
       context: .
       dockerfile: ./Dockerfile

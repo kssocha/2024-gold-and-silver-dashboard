@@ -4,7 +4,10 @@ from dateutil.relativedelta import relativedelta
 import pandas as pd
 
 import yfinance as yf
+import nasdaqdatalink
 import requests
+
+import os
 
 #time range for all queries
 start_date = (date.today() - relativedelta(years = 5)).strftime('%Y-%m-%d')
@@ -98,3 +101,7 @@ nbp_gold_price = nbp_gold_price.set_index('Date')
 #Banker's rounding used (round half to even)
 oz_g = 31.1034768
 nbp_gold_price['NBP Gold Price [PLN/oz]'] = round(nbp_gold_price['NBP Gold Price'] * oz_g, 4)
+
+#get the gold and silver price USD/oz from LBMA
+nasdaqdatalink.ApiConfig.api_key = os.environ.get('NASDAQ_API_KEY')
+lbma_df = nasdaqdatalink.get(['LBMA/GOLD', 'LBMA/SILVER'], start_date = start_date, end_date = end_date)

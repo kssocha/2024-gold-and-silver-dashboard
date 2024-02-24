@@ -2,11 +2,11 @@ variable "project" {}
 variable "credentials_file" {}
 
 variable "region" {
-    default = "europe-west10"
+    default = "europe-west2"
 }
 
 variable "zone" {
-    default = "europe-west10-b"
+    default = "europe-west2-a"
 }
 
 variable "disk_parameters" {
@@ -44,7 +44,7 @@ variable "vm_parameters" {
     default = {
         name = "vm-010"
         machine_type = "e2-standard-4"
-        zone = "europe-west10-b"
+        zone = "europe-west2-a"
         allow_stopping_for_update = true
         mode = "READ_WRITE"
     }
@@ -58,12 +58,13 @@ variable "vm_parameters" {
 variable "ssh_key_path" {
     type = string
     description = "ssh key path"
-    default = "/home/kssocha/Desktop/Nauka/portfolio/202312-gold-and-silver-dashboard/ssh/.ssh/ssh-alk.pub" 
+    default = "/home/kssocha/Desktop/Nauka/portfolio/2024-gold-and-silver-dashboard/ssh/.ssh/ssh-alk.pub" 
 }
 
 variable "network_parameters" {
     type = object({
         network_name = string
+        auto_create_subnetworks = bool
         network_tier = string
         queue_count = number
         stack_type = string
@@ -71,16 +72,17 @@ variable "network_parameters" {
     })
     description = "network parameters"
     default = {
-        network_name = "default"
+        network_name = "network-010"
+        auto_create_subnetworks = false
         network_tier = "PREMIUM"
-        queue_count = 0
+        queue_count = 1
         stack_type = "IPV4_ONLY"
-        subnetwork = "default"
+        subnetwork = "subnet-010"
     }
 
     validation {
-        condition = length(var.network_parameters) == 5
-        error_message = "network parameters must have 5 elements"
+        condition = length(var.network_parameters) == 6
+        error_message = "network parameters must have 6 elements"
     }
 
     validation {
@@ -119,7 +121,7 @@ variable "tags" {
     }
 }
 
-variable "access_port" {
+variable "firewall-010" {
     type = object({
         name = string
         allow = object({
@@ -127,23 +129,91 @@ variable "access_port" {
             ports = list(string)
         })
         source_ranges = list(string)
+        priority = string
     })
-    description = "access port"
+    description = "tcp port access"
     default = {
-        name = "access-port-010"
+        name = "allow-tcp-port"
         allow = {
                 protocol = "tcp"
-                ports = ["8050"]
+                ports = ["22", "8050"]
         }
         source_ranges = ["0.0.0.0/0"]
+        priority = "1000"
     }
 
     validation {
-        condition = length(var.access_port) == 3
-        error_message = "firewall parameters must have 3 elements"
+        condition = length(var.firewall-010) == 4
+        error_message = "firewall parameters must have 4 elements"
     }
     validation {
-        condition = length(var.access_port.allow) == 2
+        condition = length(var.firewall-010.allow) == 2
+        error_message = "firewall parameters allow must have 2 elements"
+    }
+}
+
+variable "firewall-020" {
+    type = object({
+        name = string
+        allow = object({
+            protocol = string
+            ports = list(string)
+        })
+        source_ranges = list(string)
+        priority = string
+        target_tags = list(string)
+    })
+    description = "http-server access"
+    default = {
+        name = "allow-http-server"
+        allow = {
+                protocol = "tcp"
+                ports = ["80"]
+        }
+        source_ranges = ["0.0.0.0/0"]
+        priority = "1001"
+        target_tags = ["http-server"]
+    }
+
+    validation {
+        condition = length(var.firewall-020) == 5
+        error_message = "firewall parameters must have 5 elements"
+    }
+    validation {
+        condition = length(var.firewall-020.allow) == 2
+        error_message = "firewall parameters allow must have 2 elements"
+    }
+}
+
+variable "firewall-030" {
+    type = object({
+        name = string
+        allow = object({
+            protocol = string
+            ports = list(string)
+        })
+        source_ranges = list(string)
+        priority = string
+        target_tags = list(string)
+    })
+    description = "https-server access"
+    default = {
+        name = "allow-https-server"
+        allow = {
+                protocol = "tcp"
+                ports = ["443"]
+        }
+        source_ranges = ["0.0.0.0/0"]
+        priority = "1001"
+        target_tags = ["https-server"]
+    }
+
+    validation {
+        condition = length(var.firewall-030) == 5
+        error_message = "firewall parameters must have 5 elements"
+    }
+    validation {
+        condition = length(var.firewall-030.allow) == 2
         error_message = "firewall parameters allow must have 2 elements"
     }
 }

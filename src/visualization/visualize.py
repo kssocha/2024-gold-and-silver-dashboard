@@ -89,8 +89,9 @@ title = dcc.Markdown(children = '# Gold & Silver Dashboard')
 
 #2nd row components
 investment_vehicle = dcc.RadioItems(['Gold', 'Silver'], 'Gold')
-au_ag_usd_plot_selection = dcc.RadioItems(['Candlestick', 'Time Series'],
-                                          'Candlestick') 
+au_ag_usd_data_selection = dcc.RadioItems(['SPOT', 'LBMA'], 'SPOT')
+au_ag_usd_plot_selection = dcc.RadioItems(['Candlestick [only SPOT]', 'Time Series'],
+                                          'Candlestick [only SPOT]') 
 #3rd row components
 #gold/silver ratio component
 #initial gold/silver ratio plot
@@ -99,7 +100,7 @@ au_ag_ratio = time_series_plot(yf_df, 'Gold/Silver_Ratio', title = 'Au/Ag Ratio'
                                yaxis_unit = '-')
 au_ag_ratio = dcc.Graph(figure = au_ag_ratio)
 
-#gold or silver candlestick or time series plots from SPOT
+#gold or silver candlestick or time series plots from SPOT/ LBMA
 #initial gold candlestick plot [USD/oz] - SPOT
 initial_au_usd = candlestick_plot(yf_df,
                      'Open_Gold', 'High_Gold', 'Low_Gold', 'Close_Gold',
@@ -112,7 +113,7 @@ au_ag_usd = dcc.Graph(figure = initial_au_usd)
 au_ag_ratio_latest_val = html.Div('Latest value: {0} from {1}'
                                   .format(round(yf_df['Gold/Silver_Ratio'][-1],2),
                                           yf_df.index[-1].strftime("%Y-%m-%d")))
-spot_latest_val = html.Div('Latest value: {0} USD from {1}'
+spot_lbma_latest_val = html.Div('Latest value: {0} USD from {1}'
                                                 .format(round(yf_df['Close_Gold'][-1],2),
                                                         yf_df.index[-1].strftime("%Y-%m-%d")))
 #5th row components
@@ -142,9 +143,11 @@ app.layout = dbc.Container([
     ]),
     dbc.Row([
         dbc.Col([], width = 6),
-        dbc.Col([investment_vehicle], width = 3,
+        dbc.Col([investment_vehicle], width = 1,
                style = {'display':'flex', 'flex-direction':'column', 'align-items':'flex-start'}),
-        dbc.Col([au_ag_usd_plot_selection], width = 3,
+        dbc.Col([au_ag_usd_data_selection], width = 1,
+               style = {'display':'flex', 'flex-direction':'column', 'align-items':'flex-start'}),
+        dbc.Col([au_ag_usd_plot_selection], width = 4,
                 style = {'display':'flex', 'flex-direction':'column', 'align-items':'center'})
     ]),
     dbc.Row([
@@ -157,7 +160,7 @@ app.layout = dbc.Container([
         dbc.Col([au_ag_ratio_latest_val], width = 6,
                style = {'whiteSpace': 'nowrap', 'overflow': 'hidden', 'textOverflow': 'ellipsis',
                        'text-align': 'center'}),
-         dbc.Col([spot_latest_val], width = 6,
+         dbc.Col([spot_lbma_latest_val], width = 6,
                  style = {'whiteSpace': 'nowrap', 'overflow': 'hidden', 'textOverflow': 'ellipsis',
                           'text-align': 'center'})  
     ]),
@@ -176,59 +179,79 @@ app.layout = dbc.Container([
                           'text-align': 'center'})  
     ])           
 ])
-###
 
 @app.callback(
     [Output(au_ag_usd, component_property = 'figure', ),
     Output(au_ag_usd_plot_selection, component_property = 'value'),
-    Output(spot_latest_val, component_property = 'children')],
+    Output(spot_lbma_latest_val, component_property = 'children')],
 
     [Input(investment_vehicle, component_property = 'value'),
+    Input(au_ag_usd_data_selection, component_property = 'value'),
     Input(au_ag_usd_plot_selection, component_property = 'value')]
 )
 
-def plots_func(investment_vehicle, au_ag_usd_plot_selection):
+def plots_func(investment_vehicle, au_ag_usd_data_selection, au_ag_usd_plot_selection):
       
     #Gold/ silver in USD interaction code
     if investment_vehicle == 'Gold':
-        if au_ag_usd_plot_selection == 'Candlestick':
-            au_ag_usd_fig = candlestick_plot(yf_df,
-                                             'Open_Gold', 'High_Gold', 'Low_Gold', 'Close_Gold',
-                                             title = 'Gold - SPOT',
-                                             start_date = start_date, end_date = end_date,
-                                             yaxis = 'Gold', yaxis_currency = 'USD')
-            spot_latest_val = html.Div('Latest value: {0} USD from {1}'
-                                         .format(round(yf_df['Close_Gold'][-1],2),
-                                                 yf_df.index[-1].strftime("%Y-%m-%d")))
-        elif au_ag_usd_plot_selection == 'Time Series':
-            au_ag_usd_fig = time_series_plot(yf_df, 'Close_Gold',
-                                             title = 'Gold - SPOT',
+        if au_ag_usd_data_selection == 'SPOT':
+            if au_ag_usd_plot_selection == 'Candlestick [only SPOT]':
+                au_ag_usd = candlestick_plot(yf_df,
+                                                 'Open_Gold', 'High_Gold', 'Low_Gold', 'Close_Gold',
+                                                 title = 'Gold - SPOT',
+                                                 start_date = start_date, end_date = end_date,
+                                                 yaxis = 'Gold', yaxis_currency = 'USD')
+                spot_lbma_latest_val = html.Div('Latest value: {0} USD from {1}'
+                                                .format(round(yf_df['Close_Gold'][-1],2),
+                                                        yf_df.index[-1].strftime("%Y-%m-%d")))
+            elif au_ag_usd_plot_selection == 'Time Series':
+                au_ag_usd = time_series_plot(yf_df, 'Close_Gold',
+                                                 title = 'Gold - SPOT',
+                                                 start_date = start_date, end_date = end_date,
+                                                 yaxis = 'Gold', yaxis_unit = 'USD/oz')
+                spot_lbma_latest_val = html.Div('Latest value: {0} USD from {1}'
+                                                .format(round(yf_df['Close_Gold'][-1],2),
+                                                        yf_df.index[-1].strftime("%Y-%m-%d")))
+        elif au_ag_usd_data_selection == 'LBMA':
+            au_ag_usd = time_series_plot(lbma_df, 'LBMA/GOLD - USD (PM)',
+                                             title = 'Gold - LBMA (pm)',
                                              start_date = start_date, end_date = end_date,
                                              yaxis = 'Gold', yaxis_unit = 'USD/oz')
-            spot_latest_val = html.Div('Latest value: {0} USD from {1}'
-                                         .format(round(yf_df['Close_Gold'][-1],2),
-                                         yf_df.index[-1].strftime("%Y-%m-%d")))
+            au_ag_usd_plot_selection = 'Time Series'
+            spot_lbma_latest_val = html.Div('Latest value: {0} USD from {1}'
+                                                .format(round(lbma_df['LBMA/GOLD - USD (PM)'][-1],2),
+                                                        lbma_df.index[-1].strftime("%Y-%m-%d")))
     elif investment_vehicle == 'Silver':
-        if au_ag_usd_plot_selection == 'Candlestick':
-            au_ag_usd_fig = candlestick_plot(yf_df,
-                                             'Open_Silver', 'High_Silver', 'Low_Silver',
-                                             'Close_Silver',
-                                             title = 'Silver - SPOT',
-                                             start_date = start_date, end_date = end_date,
-                                             yaxis = 'Silver', yaxis_currency = 'USD')
-            spot_latest_val = html.Div('Latest value: {0} USD from {1}'
-                                             .format(round(yf_df['Close_Silver'][-1],2),
-                                             yf_df.index[-1].strftime("%Y-%m-%d")))
-        elif au_ag_usd_plot_selection == 'Time Series':
-            au_ag_usd_fig = time_series_plot(yf_df, 'Close_Silver',
-                                             title = 'Silver - SPOT',
+        if au_ag_usd_data_selection == 'SPOT':
+            if au_ag_usd_plot_selection == 'Candlestick [only SPOT]':
+                au_ag_usd = candlestick_plot(yf_df,
+                                                 'Open_Silver', 'High_Silver', 'Low_Silver',
+                                                 'Close_Silver',
+                                                 title = 'Silver - SPOT',
+                                                 start_date = start_date, end_date = end_date,
+                                                 yaxis = 'Silver', yaxis_currency = 'USD')
+                spot_lbma_latest_val = html.Div('Latest value: {0} USD from {1}'
+                                                .format(round(yf_df['Close_Silver'][-1],2),
+                                                        yf_df.index[-1].strftime("%Y-%m-%d")))
+            elif au_ag_usd_plot_selection == 'Time Series':
+                au_ag_usd = time_series_plot(yf_df, 'Close_Silver',
+                                                 title = 'Silver - SPOT',
+                                                 start_date = start_date, end_date = end_date,
+                                                 yaxis = 'Silver', yaxis_unit = 'USD/oz')
+                spot_lbma_latest_val = html.Div('Latest value: {0} USD from {1}'
+                                                .format(round(yf_df['Close_Silver'][-1],2),
+                                                        yf_df.index[-1].strftime("%Y-%m-%d")))
+        elif au_ag_usd_data_selection == 'LBMA':
+            au_ag_usd = time_series_plot(lbma_df, 'LBMA/SILVER - USD',
+                                             title = 'Silver - LBMA',
                                              start_date = start_date, end_date = end_date,
                                              yaxis = 'Silver', yaxis_unit = 'USD/oz')
-            spot_latest_val = html.Div('Latest value: {0} USD from {1}'
-                                         .format(round(yf_df['Close_Silver'][-1],2),
-                                         yf_df.index[-1].strftime("%Y-%m-%d")))
+            au_ag_usd_plot_selection = 'Time Series'
+            spot_lbma_latest_val = html.Div('Latest value: {0} USD from {1}'
+                                                .format(round(lbma_df['LBMA/SILVER - USD'][-1],2),
+                                                        lbma_df.index[-1].strftime("%Y-%m-%d")))
     
-    return au_ag_usd_fig, au_ag_usd_plot_selection, spot_latest_val
+    return au_ag_usd, au_ag_usd_plot_selection, spot_lbma_latest_val
 
 if __name__ == '__main__':
     app.run_server(debug = False, host='0.0.0.0', port = 8050)

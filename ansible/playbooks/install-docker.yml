@@ -8,12 +8,42 @@
     - role: geerlingguy.pip
 
     - role: geerlingguy.docker
-      
+
+  vars_files:
+    - /home/kssocha/Desktop/Nauka/portfolio/2024-gold-and-silver-dashboard/ansible/group_vars/api_keys.yml
+    - /home/kssocha/Desktop/Nauka/portfolio/2024-gold-and-silver-dashboard/ansible/group_vars/docker_images_list.yml
+
   tasks:
+    - name: Gather docker containers IDs
+      become: true
+      command: docker ps -a -q
+      register: docker_containers_raw
+
+    - set_fact:
+        docker_containers: "{{ docker_containers_raw.stdout_lines }}"
+
+    - name: Remove all existing containers
+      become: true
+      shell: docker rm -f {{ item }}
+      with_items: "{{ docker_containers }}"
+
+    - name: Gather docker images IDs
+      become: true
+      command: docker images -q
+      register: docker_images_raw
+
+    - set_fact:
+        docker_images: "{{ docker_images_raw.stdout_lines }}"
+
+    - name: Remove all existing images
+      become: true
+      shell: docker rmi -f {{ item }}
+      with_items: "{{ docker_images }}"
+
     - name: Pull dashboard container
       become: true
-      command: docker pull kssocha/2024-gold-and-silver-dashboard:v0.1
+      command: docker pull "{{ dashboard_image }}"
 
     - name: Start dashboard container
       become: true
-      command: docker run --name 2024-gold-and-silver-dashboard -d -p 8050:8050 kssocha/2024-gold-and-silver-dashboard:v0.1
+      command: docker run -e NASDAQ_API_KEY="{{ nasdaq_api_key }}" --name dashboard -d -p 8050:8050 "{{ dashboard_image }}"
